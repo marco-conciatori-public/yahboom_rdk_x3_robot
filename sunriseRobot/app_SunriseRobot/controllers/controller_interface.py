@@ -132,7 +132,7 @@ class ControllerFunctions(object):
                     or self.robot_head.robot_sub_mode == gc.SUB_MODE_ARM_IK):
                 self.memorize_or_set_arm_position(button='button_east', value=value)
 
-    def button_west(self, value: bool, from_vr=True) -> None:
+    def button_west(self, value: bool, from_vr: bool = False) -> None:
         if self.robot_head.robot_mode == gc.MODE_USER_CONTROLLED:
             if self.robot_head.robot_sub_mode == gc.SUB_MODE_WHEELS:
                 if value:
