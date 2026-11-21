@@ -42,7 +42,7 @@ To enable the autostart of the application when the robot is turned on, you have
 
 ## Features
 - Control robot via wireless Joystick included with the robot.
-- Since the number of buttons is limited, the robot has modes and sub-modes, in which the buttons are mapped to different functions. For a complete list of button-functions pairs, see the "sunriseRobot/info/joystick_key_map.pptx.pdf" file.
+- Since the number of buttons is limited, the robot has modes and sub-modes, in which the buttons are mapped to different functions. For a complete list of button-functions pairs, see the "sunriseRobot/app_SunriseRobot/docs/ps2_controller_map_en.pptx" file.
 - Use lidar for obstacle avoidance when controlling the robot with the joystick and to understand if it reached the target in autonomous (vision) mode.
 - Search for user-defined objects using YOLOv11 model.
 - Follow sounds using the microphone and the DoA algorithm.
