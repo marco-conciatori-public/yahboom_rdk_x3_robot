@@ -1,0 +1,16 @@
+# Switches the case fan on once at boot (physical_accessories/fan.py), replacing the desktop autostart entry.
+# Kept separate from robot_control.service on purpose: the fan stays on even if the main app crashes.
+# Installed by sunriseRobot/script_launchers/install_services.sh.
+
+[Unit]
+Description=Yahboom RDK X3 case fan
+After=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=root
+ExecStart=/usr/bin/python3 /root/GIT/yahboom_rdk_x3_robot/sunriseRobot/app_SunriseRobot/physical_accessories/fan.py
+
+[Install]
+WantedBy=multi-user.target

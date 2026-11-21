@@ -37,9 +37,8 @@ To enable the autostart of the application when the robot is turned on, you have
 - remove/disable the original app
 - clone/copy the project on the robot
 - install missing libraries
-- copy/move sunriseRobot/script_launchers/start_robot_control.desktop and sunriseRobot/script_launchers/start_robot_control_no_gui.desktop to the autorun folder.
-- make the files executable (chmod +x start_robot_control.desktop and chmod +x start_robot_control_no_gui.desktop)
-- you can manually start the application by running the script sunriseRobot/script_launchers/start_robot_control.sh or sunriseRobot/script_launchers/start_robot_control_no_gui.sh
+- install the systemd services with `sudo bash sunriseRobot/script_launchers/install_services.sh`. The main application (`robot_control.service`) and the fan (`robot_fan.service`) then start at boot, without needing the desktop, and the main application restarts on its own if it crashes. The script also disables the old desktop autostart entries.
+- manage the application with `systemctl status|restart|stop robot_control`, and read its output with `journalctl -u robot_control -f`.
 
 ## Features
 - Control robot via wireless Joystick included with the robot.

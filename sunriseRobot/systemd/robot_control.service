@@ -1,0 +1,32 @@
+# Main robot application (main_thread.py), run as a systemd service instead of from the desktop autostart.
+# Starts at boot without a desktop session, restarts on its own if the process dies, and keeps its output in
+# the system journal. Installed by sunriseRobot/script_launchers/install_services.sh.
+#
+#   status:          systemctl status robot_control
+#   live output:     journalctl -u robot_control -f
+#   restart / stop:  systemctl restart robot_control / systemctl stop robot_control
+
+[Unit]
+Description=Yahboom RDK X3 robot control (main_thread.py)
+Wants=network-online.target
+After=network-online.target sound.target
+# stop retrying if it crashes 5 times within 5 minutes (a broken install would otherwise loop forever);
+# `systemctl reset-failed robot_control` then `systemctl start robot_control` to try again
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/GIT/yahboom_rdk_x3_robot/sunriseRobot/app_SunriseRobot
+ExecStart=/bin/bash /root/GIT/yahboom_rdk_x3_robot/sunriseRobot/script_launchers/run_robot_control_service.sh
+# without this Python buffers stdout when it is not a terminal, and prints reach the journal late, in chunks
+Environment=PYTHONUNBUFFERED=1
+# "always", not "on-failure": the process also exits with code 0 when every worker thread has died
+Restart=always
+RestartSec=5
+# stopping the service signals the whole control group, so ROS2 launch processes started by the app go too
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

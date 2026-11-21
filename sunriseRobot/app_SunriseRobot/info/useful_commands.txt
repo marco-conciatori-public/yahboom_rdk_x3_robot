@@ -32,8 +32,14 @@ ros2
 ssh
     username: root
     password: yahboom
-    cd GIT/yahboom_rdk_x3_robot/sunriseRobot/script_launchers
-    /root/GIT/yahboom_rdk_x3_robot/sunriseRobot/script_launchers/start_robot_control_no_gui.sh
+
+robot_control service (main app, see sunriseRobot/systemd/)
+    install / update units:  sudo bash /root/GIT/yahboom_rdk_x3_robot/sunriseRobot/script_launchers/install_services.sh
+    status:                  systemctl status robot_control
+    live output:             journalctl -u robot_control -f
+    output since last boot:  journalctl -u robot_control -b
+    restart / stop / start:  systemctl restart robot_control
+    after 5 quick crashes:   systemctl reset-failed robot_control && systemctl start robot_control
 
 get video sources
 	ls /dev/ | grep video
