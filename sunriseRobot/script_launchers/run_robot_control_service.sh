@@ -14,7 +14,7 @@ source /root/marco_ros2_ws/install/local_setup.bash
 source /root/software/library_ws/install/local_setup.bash
 
 # systemd does not read ~/.bashrc. Same domain as the interactive shells (see
-# info/connection_info.txt), so `ros2 topic list` from an SSH session sees the
+# docs/connection_info.txt), so `ros2 topic list` from an SSH session sees the
 # robot's nodes. ROS2 processes started by the app inherit it.
 export ROS_DOMAIN_ID=32
 

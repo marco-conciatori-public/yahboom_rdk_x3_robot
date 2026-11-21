@@ -4,20 +4,20 @@ For the complete list of hardware and software changes, see the project website:
 
 There you will also find all the robot capabilities with videos and explanations.
 Finally, there is a step-by-step guide on how to recreate the robot from scratch.
-![robot_rdk_x3.png](sunriseRobot/app_SunriseRobot/info/robot_rdk_x3.png)
+![robot_rdk_x3.png](sunriseRobot/app_SunriseRobot/docs/robot_rdk_x3.png)
 
 # Hardware Modifications
 - My current robot uses a bigger chassis "Pendulous Mecanum wheel chassis (L)" (https://category.yahboom.net/collections/a-chassis-bracket/products/ros-chassis), which allows for more space for the components. It is also necessary to fit the robotic arm. 
 - the robotic arm DOFBOT-JetsonNANO (http://www.yahboom.net/study/Dofbot-Jetson_nano).
 - the Nvidia Jetson Nano 4GB (https://developer.nvidia.com/embedded/jetson-nano-developer-kit) that comes with the robotic arm.
 - a Coral USB Accelerator (https://coral.ai/products/accelerator/) for running the YOLO object detection model faster (from >20 seconds to 2~3 seconds per image).
-- a microphone able to detect the Direction of Arrival (DoA) of the sound (https://wiki.seeedstudio.com/ReSpeaker_Mic_Array_v2.0/). To set the correct angle between the microphone and the robot see sunriseRobot/app_SunriseRobot/info/microphone_orientation.png.
+- a microphone able to detect the Direction of Arrival (DoA) of the sound (https://wiki.seeedstudio.com/ReSpeaker_Mic_Array_v2.0/). To set the correct angle between the microphone and the robot see sunriseRobot/app_SunriseRobot/docs/microphone_orientation.png.
 - a red and green LED to indicate the robot's status during various operations.
 - two 2-pin buttons to be able to perform important operations without the need for a joystick (e.g. to switch between Wi-Fi and hotspot).
 - the LED and buttons are connected to the GPIO pins of the rdk expansion board, details can be found in
-  - sunriseRobot/app_SunriseRobot/info/40_pin_meaning.png
-  - sunriseRobot/app_SunriseRobot/info/40_pin_position.jpg
-  - sunriseRobot/app_SunriseRobot/info/GPIO_pin_connections.pptx
+  - sunriseRobot/app_SunriseRobot/docs/40_pin_meaning.png
+  - sunriseRobot/app_SunriseRobot/docs/40_pin_position.jpg
+  - sunriseRobot/app_SunriseRobot/docs/GPIO_pin_connections.pptx
 
 # VR Connection
 - The "src" folder contains ROS2 packages (robot-side) for connecting to the robot to a VR headset via Wi-Fi or hotspot. For ease of work, it is part of the main project, but for it to actually work, the following steps are necessary:
