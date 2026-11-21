@@ -10,4 +10,10 @@ min_response_dist: 0.2
 # Wrap-around supported when low > high (e.g. [330, 30] = 60° centred on 0°). Set to null to
 # disable the feature and apply min_response_dist uniformly.
 front_arc: [-50, 50]
+# Arc behind the lidar (same convention) where the robot's own parts are seen farther than min_response_dist:
+# measured on 2026-11-21, the 160-180 deg sector had 8 returns between 0.2 and 0.3 m, enough to count as an
+# obstacle and block driving backward. Inside rear_arc, returns closer than rear_min_response_dist are ignored.
+# Set rear_arc to null to disable it.
+rear_arc: [140, 220]
+rear_min_response_dist: 0.35
 verbose: 0

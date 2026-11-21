@@ -17,6 +17,8 @@ class LidarListener(Node):
                  response_dist: float = 12.0,
                  min_response_dist: float = 0.0,
                  front_arc: list = None,
+                 rear_arc: list = None,
+                 rear_min_response_dist: float = None,
                  sector_angle: float = None,
                  search_only_arc: list = None,
                  scan_expiration_time: float = 0.5,
@@ -43,6 +45,11 @@ class LidarListener(Node):
         # [low_deg, high_deg] (in the same convention as scan_data.angle_min). Wrap-around supported when
         # low > high (e.g., [330, 30] covers the 60° arc that crosses 0°). None disables the feature.
         self.front_arc = front_arc
+        # Arc behind the lidar where the robot's own parts sit farther than min_response_dist: there, returns
+        # closer than rear_min_response_dist are ignored instead. Same angle convention as front_arc. None
+        # disables it (rear_min_response_dist is then unused).
+        self.rear_arc = rear_arc
+        self.rear_min_response_dist = rear_min_response_dist
         self.scan_expiration_time = scan_expiration_time
 
         # sector_angle attributes
@@ -75,9 +82,13 @@ class LidarListener(Node):
             self.scan_arc(msg)
 
     def _is_in_front_arc(self, angle_deg: float) -> bool:
-        if self.front_arc is None:
+        return self._is_in_arc(angle_deg=angle_deg, arc=self.front_arc)
+
+    @staticmethod
+    def _is_in_arc(angle_deg: float, arc: list) -> bool:
+        if arc is None:
             return False
-        low, high = self.front_arc
+        low, high = arc
         if high - low >= 360:
             return True
         a = angle_deg % 360
@@ -89,8 +100,13 @@ class LidarListener(Node):
 
     def _effective_min_dist(self, angle_deg: float) -> float:
         # Front of the lidar is unobstructed: accept any positive return.
-        # Sides/back: enforce min_response_dist to drop the robot's own frame.
-        return 0.0 if self._is_in_front_arc(angle_deg) else self.min_response_dist
+        # Rear arc: the robot's own parts reach farther there, so a larger minimum.
+        # Sides: enforce min_response_dist to drop the robot's own frame.
+        if self._is_in_front_arc(angle_deg):
+            return 0.0
+        if self.rear_arc is not None and self._is_in_arc(angle_deg=angle_deg, arc=self.rear_arc):
+            return self.rear_min_response_dist
+        return self.min_response_dist
 
     def search_obstacles(self, scan_data: LaserScan) -> None:
         if not isinstance(scan_data, LaserScan):
@@ -162,6 +178,8 @@ class ThreadedLidarListener:
                  response_dist: float = 12.0,
                  min_response_dist: float = 0.0,
                  front_arc: list = None,
+                 rear_arc: list = None,
+                 rear_min_response_dist: float = None,
                  sector_angle: float = 20,
                  search_only_arc: list = None,
                  scan_expiration_time: float = 0.5,
@@ -185,6 +203,8 @@ class ThreadedLidarListener:
                 response_dist=response_dist,
                 min_response_dist=min_response_dist,
                 front_arc=front_arc,
+                rear_arc=rear_arc,
+                rear_min_response_dist=rear_min_response_dist,
                 sector_angle=sector_angle,
                 search_only_arc=search_only_arc,
                 scan_expiration_time=scan_expiration_time,
