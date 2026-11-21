@@ -1,0 +1,17 @@
+ORIGINAL BATTERY (CUNNERTLY NOT USED ANYMORE)
+Battery name: 18650 battery pack
+Nominal voltage: 7.4V
+Supply voltage: 5.6V~8.4V
+Battery capacity: 6600 mAh
+Rated current: 1.2C
+Protection current: 2C
+
+RDK X3 BATTERY (BELOW)
+Battery name: Zeee 2S Lipo 100 C RC Hardcase Battery with T Plug Connector
+Nominal voltage: 7.4 V
+Battery capacity: 8000 mAh
+
+NVIDIA JETSON NANO BATTERY (MIDDLE)
+Battery name: Zeee 3S Lipo 50C RC Battery with T Plug Connector
+Nominal voltage: 11.1 V
+Battery capacity: 5200 mAh
