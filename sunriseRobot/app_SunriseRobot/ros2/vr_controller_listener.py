@@ -1,5 +1,4 @@
 import time
-import threading
 
 import rclpy
 from rclpy.node import Node
@@ -7,6 +6,7 @@ from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from sensor_msgs.msg import Joy
 
 import utils
+from ros2.node_spinner import NodeSpinner
 
 
 class VrControllerListener(Node):
@@ -64,7 +64,7 @@ class ThreadedVrControllerListener:
         self.queue_size = queue_size
         self.input_expiration_time = input_expiration_time
         self.controller_listener_node = None
-        self.spin_thread = None
+        self.spinner = None
         self.verbose = verbose
 
         try:
@@ -76,13 +76,8 @@ class ThreadedVrControllerListener:
                 input_expiration_time=self.input_expiration_time
             )
 
-            # Spin the node in a separate thread
-            self.spin_thread = threading.Thread(
-                target=rclpy.spin,
-                name='vr_controller_listener_thread',
-                args=(self.controller_listener_node,)
-            )
-            self.spin_thread.start()
+            # Spin the node in a separate thread (stoppable, see NodeSpinner)
+            self.spinner = NodeSpinner(node=self.controller_listener_node, thread_name='vr_controller_listener_thread')
 
             if self.verbose >= 1:
                 print(f'VR Controller listener created and listening on {topic_name}')
@@ -110,14 +105,18 @@ class ThreadedVrControllerListener:
         return None, None
 
     def delete_listener(self):
-        if self.spin_thread is not None:
-            self.controller_listener_node.destroy_node()
-            self.spin_thread.join()
-            if self.verbose >= 2:
+        # idempotent: also called by __del__ after an explicit call
+        if self.spinner is not None:
+            stopped = self.spinner.stop()
+            self.spinner = None
+            self.controller_listener_node = None
+            if not stopped:
+                print('VR Controller listener spin thread did not stop in time')
+            elif self.verbose >= 2:
                 print('VR Controller listener stopped')
         else:
             if self.verbose >= 2:
-                print('VR Controller listener not stopped, thread is already None')
+                print('VR Controller listener not stopped, it is already stopped')
 
     def __del__(self):
         self.delete_listener()

@@ -1,5 +1,4 @@
 import time
-import threading
 import numpy as np
 
 import rclpy
@@ -8,6 +7,7 @@ from sensor_msgs.msg import LaserScan
 
 import utils
 from ros2 import ros2_processes
+from ros2.node_spinner import NodeSpinner
 
 
 class LidarListener(Node):
@@ -174,7 +174,7 @@ class ThreadedLidarListener:
         self.min_response_dist = min_response_dist
         self.front_arc = front_arc
         self.lidar_listener_node = None
-        self.spin_thread = None
+        self.spinner = None
         self.verbose = verbose
         try:
             if not rclpy.ok():
@@ -189,13 +189,8 @@ class ThreadedLidarListener:
                 search_only_arc=search_only_arc,
                 scan_expiration_time=scan_expiration_time,
             )
-            # Spin the node in a separate thread
-            self.spin_thread = threading.Thread(
-                target=rclpy.spin,
-                name='lidar_listener',
-                args=(self.lidar_listener_node,)
-            )
-            self.spin_thread.start()
+            # Spin the node in a separate thread (stoppable, see NodeSpinner)
+            self.spinner = NodeSpinner(node=self.lidar_listener_node, thread_name='lidar_listener')
             if self.verbose >= 1:
                 print('Lidar listener created and listening')
 
@@ -232,14 +227,18 @@ class ThreadedLidarListener:
         return None, None
 
     def delete_listener(self):
-        if self.spin_thread is not None:
-            self.lidar_listener_node.destroy_node()
-            self.spin_thread.join()
-            if self.verbose >= 2:
+        # idempotent: also called by __del__ after an explicit call
+        if self.spinner is not None:
+            stopped = self.spinner.stop()
+            self.spinner = None
+            self.lidar_listener_node = None
+            if not stopped:
+                print('Lidar listener spin thread did not stop in time')
+            elif self.verbose >= 2:
                 print('Lidar listener stopped')
         else:
             if self.verbose >= 2:
-                print('Lidar listener not stopped, thread is already None')
+                print('Lidar listener not stopped, it is already stopped')
 
     def __del__(self):
         self.delete_listener()
