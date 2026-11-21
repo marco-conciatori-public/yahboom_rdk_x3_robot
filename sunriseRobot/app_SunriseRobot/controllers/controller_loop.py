@@ -33,6 +33,9 @@ class ControllerLoop(object):
                                                         f'{self.min_allowed_distance[0]}) must be smaller than '
                                                         f'min_allowed_distance[1] ({self.min_allowed_distance[1]}).')
         self.obstacles_by_sector = None
+        # True while a stop for an obstacle has been logged, so the log gets one line per stop instead of one
+        # every loop iteration (~10 per second) for as long as the robot is held back
+        self.obstacle_reported = False
         self.average_distance_by_sector = None
         # print lidar and direction to console
         # self.circle_radius = 15
@@ -147,10 +150,17 @@ class ControllerLoop(object):
                             self.robot_body.set_beep(gc.SHORT_BEEP)
                             # allow only rotation
                             self.robot_body.set_car_motion(v_x=0, v_y=0, v_z=self.robot_head.speed_z)
-                            if self.verbose >= 2:
-                                print('obstacle detected, stopping the robot')
+                            if not self.obstacle_reported:
+                                self.obstacle_reported = True
+                                if self.verbose >= 1:
+                                    print(f'Obstacle detected (robot direction {robot_direction:.0f} deg, lidar '
+                                          f'sector {sector_num}), stopping the robot')
                             time.sleep(0.1)
                             return
+                if self.obstacle_reported:
+                    self.obstacle_reported = False
+                    if self.verbose >= 1:
+                        print('Path clear, motion allowed again')
 
             self.robot_head.check_programmed_stop()
             self.robot_body.set_car_motion(
