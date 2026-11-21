@@ -22,7 +22,7 @@ Finally, there is a step-by-step guide on how to recreate the robot from scratch
 # VR Connection
 - The "src" folder contains ROS2 packages (robot-side) for connecting to the robot to a VR headset via Wi-Fi or hotspot. For ease of work, it is part of the main project, but for it to actually work, the following steps are necessary:
   - Clone/copy the project on the robot.
-  - Copy/move "scr" to "root/marco_ros2_ws/src" (you can change the path, but you have to also update the files sunriseRobot/script_launchers/start_ros2.sh and sunriseRobot/script_launchers/start_ros2_no_gui.sh).
+  - Copy/move "scr" to "root/marco_ros2_ws/src" (you can change the path, but you have to also update sunriseRobot/script_launchers/start_ros2.sh and sunriseRobot/app_SunriseRobot/ros2/ros2_processes.py).
   - Build it with ROS2 commands:
     - cd /root/marco_ros2_ws/
     - rosdep install -i --from-path src --rosdistro foxy -y --ignore-src

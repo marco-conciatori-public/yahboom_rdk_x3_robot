@@ -1,4 +1,3 @@
-import os
 import time
 import threading
 import numpy as np
@@ -8,6 +7,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 
 import utils
+from ros2 import ros2_processes
 
 
 class LidarListener(Node):
@@ -199,9 +199,8 @@ class ThreadedLidarListener:
             if self.verbose >= 1:
                 print('Lidar listener created and listening')
 
-            os.system('gnome-terminal -- bash -c "source /opt/ros/foxy/setup.bash;'
-                      'source /root/marco_ros2_ws/install/setup.bash;'
-                      'ros2 launch lidar_pub ms200_scan.launch.py;exec bash"')
+            # shared publisher: does nothing if the VR connection or another listener already started it
+            ros2_processes.LIDAR_PUBLISHER.start(verbose=self.verbose)
 
         except Exception as e:
             utils.print_exception(exception=e, message='Lidar listener creation error')

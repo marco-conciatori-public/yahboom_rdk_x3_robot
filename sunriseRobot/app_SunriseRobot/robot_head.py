@@ -8,6 +8,7 @@ from collections import deque
 import args
 import utils
 import global_constants as gc
+from ros2 import ros2_processes
 
 
 class RobotHead:
@@ -389,21 +390,12 @@ class RobotHead:
             return
         self.ros2_vr_connection_status = 'processing'
         utils.start_generic_process(robot_head=self, name='Starting ROS2')
-        if self.gui_mode:
-            # activate ROS2 endpoint
-            os.system('gnome-terminal -- bash -c "source /opt/ros/foxy/setup.bash;cd /root/marco_ros2_ws/;'
-                      'source install/local_setup.bash;ros2 launch ros_tcp_endpoint endpoint_launch.py;exec bash"')
-            # activate lidar publisher
-            os.system('gnome-terminal -- bash -c "source /opt/ros/foxy/setup.bash;'
-                      'source /root/marco_ros2_ws/install/setup.bash;'
-                      'ros2 launch lidar_pub ms200_scan.launch.py;exec bash"')
-        else:
-            os.system(f'{gc.SCRIPT_FOLDER_PATH}start_ros2_no_gui.sh')
+        ros2_processes.ROS_TCP_ENDPOINT.start(verbose=self.verbose)
+        ros2_processes.LIDAR_PUBLISHER.start(verbose=self.verbose)
         self.ros2_vr_connection_status = 'active'
         utils.finish_generic_process(robot_head=self)
 
     def deactivate_ros2(self) -> None:
-        # TODO: it does not really kill the process in the separate console
         if self.ros2_vr_connection_status == 'inactive':
             if self.verbose >= 2:
                 print('ROS2 VR connection is already inactive')
@@ -411,10 +403,8 @@ class RobotHead:
         self.ros2_vr_connection_status = 'processing'
         utils.start_generic_process(robot_head=self, name='Stopping ROS2')
         # rclpy.shutdown()
-        # deactivate ROS2 endpoint
-        utils.kill_process_(process_name='ros2', verbose=self.verbose)
-        # deactivate lidar publisher
-        utils.kill_process_(process_name='lidar', verbose=self.verbose)
+        ros2_processes.ROS_TCP_ENDPOINT.stop(verbose=self.verbose)
+        ros2_processes.LIDAR_PUBLISHER.stop(verbose=self.verbose)
         self.led_3_pin.set_color(gc.GREEN)
         self.ros2_vr_connection_status = 'inactive'
         utils.finish_generic_process(robot_head=self)
@@ -496,8 +486,8 @@ class RobotHead:
 
     def toggle_gui_mode(self) -> None:
         """
-        Change between Graphical User Interface (GUI) mode and console mode.
-        Note that Gnome terminal requires the GUI to work, so it can't be used in console mode.
+        Start or stop the desktop. The main app (robot_control.service) and the ROS2 processes it starts do not
+        depend on it, so they keep running either way.
         """
         self.gui_mode = not self.gui_mode
         if self.gui_mode:

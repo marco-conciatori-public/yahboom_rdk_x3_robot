@@ -70,12 +70,11 @@ Touch targets about 10 mm minimum, so roughly 6-8 buttons per page, with tabs.
 
 Each step is useful on its own, in this order.
 
-### 1. Main app under systemd (RDK X3)
-- Unit file for the main app (and one for ROS2 if it stays a separate launch), started at boot.
-- Output goes to the journal instead of Gnome terminal windows. This also removes one of the reasons the
-  no-GUI mode is broken (the launch scripts need a desktop for gnome-terminal).
-- Read logs with `journalctl -u <unit>`; the supervisor reads them the same way.
-- To decide: how GUI mode / `toggle_gui_mode()` and the launch scripts fit with this.
+### 1. Main app under systemd (RDK X3) - implemented, not yet tested on the robot
+- `robot_control.service` and `robot_fan.service` in `sunriseRobot/systemd/`, installed by
+  `script_launchers/install_services.sh`. ROS2 processes are children of the main app (`ros2/ros2_processes.py`),
+  no more gnome-terminal windows.
+- Read logs with `journalctl -u robot_control`; the supervisor reads them the same way.
 
 ### 2. Thread health tracking (RDK X3, main app)
 - Small registry: each thread loop records "last ran at" and "last exception". Exceptions caught at the
