@@ -7,6 +7,8 @@ import struct
 import warnings
 import threading
 
+import thread_health
+
 
 class RobotBody(object):
     _uart_state = 0
@@ -252,6 +254,13 @@ class RobotBody(object):
 
     # receive data
     def _receive_data(self) -> None:
+        thread_health.register()
+        try:
+            self._receive_data_loop()
+        except Exception as e:
+            thread_health.report_exception(exception=e, message='Serial receive error')
+
+    def _receive_data_loop(self) -> None:
         while True:
             head1 = bytearray(self.ser.read())[0]
             if head1 == self._HEAD:
@@ -272,6 +281,8 @@ class RobotBody(object):
                         else:
                             check_sum = check_sum + value
                     if check_sum % 256 == rx_check_num:
+                        # a valid packet: the expansion board is alive and talking (auto report, every 10 ms)
+                        thread_health.beat()
                         self._parse_data(ext_type, ext_data)
                     else:
                         if self.verbose >= 3:

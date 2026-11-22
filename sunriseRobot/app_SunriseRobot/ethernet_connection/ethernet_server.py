@@ -5,6 +5,7 @@ import threading
 
 import args
 import utils
+import thread_health
 import global_constants as gc
 from robot_link import protocol
 from function_calls.function_caller import FunctionCaller
@@ -160,10 +161,22 @@ class EthernetServer:
             time.sleep(self.retry_interval)
 
     def wait_connections(self):
+        thread_health.register()
+        try:
+            self._wait_connections()
+        except Exception as e:
+            if not self.is_active:
+                # stop() closed the socket under accept(): an intentional stop, not a crash
+                thread_health.mark_stopped(reason='server stopped')
+            else:
+                thread_health.report_exception(exception=e, message='Ethernet server error')
+
+    def _wait_connections(self):
         self.listen()
 
         while self.is_active:
             connection, address = self.socket.accept()
+            thread_health.beat()
             self.connection_counter += 1
             new_connection = ConnectionHandler(
                 function_caller=self.function_caller,
@@ -177,5 +190,6 @@ class EthernetServer:
 
         if self.socket:
             self.socket.close()
+        thread_health.mark_stopped(reason='server stopped')
         if self.verbose >= 1:
             print("Connection closed.")

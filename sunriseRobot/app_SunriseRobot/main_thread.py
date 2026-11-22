@@ -6,6 +6,7 @@ import Hobot.GPIO as GPIO
 
 import args
 import utils
+import thread_health
 import global_constants as gc
 from robot_body import RobotBody
 from robot_head import RobotHead
@@ -36,6 +37,8 @@ def main_loop(**kwargs):
         print('Running in GUI mode')
     # else:
     #     parameters['verbose'] = 0  # disable verbose output in non-GUI mode
+    # logs thread state changes (ok/warning/error/stopped) to the journal; the touch panel will read the same data
+    thread_health.start_monitor()
     robot_body = RobotBody(com=parameters['com'], baud_rate=parameters['baud_rate'], verbose=parameters['verbose'])
     robot_body.create_receive_threading()
     time.sleep(0.2)  # wait for the robot body to initialize
@@ -252,6 +255,7 @@ def main_loop(**kwargs):
 
 # USB wireless gamepad
 def task_ps2_controller(**kwargs):
+    thread_health.register()
     try:
         controller_functions = ControllerFunctions(
             robot_head=kwargs['robot_head'],
@@ -265,20 +269,23 @@ def task_ps2_controller(**kwargs):
             verbose=kwargs['verbose'],
         )
         while True:
+            thread_health.beat()
             state = ps2_controller.event_listener()
             time.sleep(0.01)
             if state != gc.STATE_OK:
                 if state == gc.STATE_KEY_BREAK:
+                    thread_health.mark_stopped(reason='keyboard interrupt')
                     break
                 time.sleep(1)
                 ps2_controller.reconnect()
 
     except Exception as e:
-        utils.print_exception(exception=e, message='PS2 Controller error')
+        thread_health.report_exception(exception=e, message='PS2 Controller error')
 
 
 # VR controllers
 def task_vr_controller(**kwargs):
+    thread_health.register()
     try:
         controller_functions = ControllerFunctions(
             robot_head=kwargs['robot_head'],
@@ -288,6 +295,7 @@ def task_vr_controller(**kwargs):
         )
         meta_quest_3_controller = None
         while True:
+            thread_health.beat()
             if meta_quest_3_controller is None:
                 if kwargs['robot_head'].ros2_vr_connection_status == 'active':
                     meta_quest_3_controller = MetaQuest3Controller(
@@ -307,19 +315,22 @@ def task_vr_controller(**kwargs):
             time.sleep(0.01)
 
     except Exception as e:
-        utils.print_exception(exception=e, message='VR Controller error')
+        thread_health.report_exception(exception=e, message='VR Controller error')
 
 
 def task_controller_loop(**kwargs):
+    thread_health.register()
     try:
         controller_loop = ControllerLoop(**kwargs)
         while True:
+            thread_health.beat()
             controller_loop.update_robot_loop()
     except Exception as e:
-        utils.print_exception(exception=e, message='Controller loop error')
+        thread_health.report_exception(exception=e, message='Controller loop error')
 
 
 def task_vision_agent(**kwargs):
+    thread_health.register()
     robot_head = kwargs['robot_head']
     try:
         robot_head.robot_mode_list.append(gc.MODE_AUTONOMOUS_VISION)
@@ -343,9 +354,10 @@ def task_vision_agent(**kwargs):
             raise ValueError(f'Unknown camera_type: {kwargs["camera_type"]}')
         vision_agent = VisionAgent(**kwargs)
         while True:
+            thread_health.beat()
             vision_agent.autonomous_behavior()
     except Exception as e:
-        utils.print_exception(exception=e, message='Vision agent error')
+        thread_health.report_exception(exception=e, message='Vision agent error')
         # goes through robot_head so the removal is serialized with next_mode(), which reads an index into
         # robot_mode_list and then indexes back into it (a removal landing between the two raises IndexError)
         robot_head.remove_mode(mode=gc.MODE_AUTONOMOUS_VISION)
@@ -365,11 +377,13 @@ def task_vision_agent(**kwargs):
 
 # Audio from VR
 def task_audio_from_vr(**kwargs):
+    thread_health.register()
     try:
         if not rclpy.ok():
             rclpy.init()
         meta_quest_3_audio_receiver = None
         while True:
+            thread_health.beat()
             if meta_quest_3_audio_receiver is None and kwargs['robot_head'].ros2_vr_connection_status == 'active':
                 meta_quest_3_audio_receiver = VrAudioSubscriber(
                     robot_head=kwargs['robot_head'], verbose=kwargs['verbose'])
@@ -384,16 +398,18 @@ def task_audio_from_vr(**kwargs):
             else:
                 time.sleep(0.05)
     except Exception as e:
-        utils.print_exception(exception=e, message='Audio from VR error')
+        thread_health.report_exception(exception=e, message='Audio from VR error')
 
 
 # Audio from Robot
 def task_audio_from_robot(**kwargs):
+    thread_health.register()
     try:
         if not rclpy.ok():
             rclpy.init()
         meta_quest_3_audio_sender = None
         while True:
+            thread_health.beat()
             if meta_quest_3_audio_sender is None and kwargs['robot_head'].ros2_vr_connection_status == 'active':
                 meta_quest_3_audio_sender = VrAudioPublisher(verbose=kwargs['verbose'])
                 time.sleep(0.5)
@@ -405,18 +421,20 @@ def task_audio_from_robot(**kwargs):
             else:
                 time.sleep(0.05)
     except Exception as e:
-        utils.print_exception(exception=e, message='Audio from Robot error')
+        thread_health.report_exception(exception=e, message='Audio from Robot error')
 
 
 # TTS to app: publishes app-originated AI responses to the connected app (/audio_to_app) so the robot stays
 # silent for them. Only meaningful while an app is connected (an app voice session requires the ROS2 VR link),
 # so it is created and destroyed with the connection like the other VR audio nodes.
 def task_audio_to_app(**kwargs):
+    thread_health.register()
     try:
         if not rclpy.ok():
             rclpy.init()
         tts_to_app_publisher = None
         while True:
+            thread_health.beat()
             if tts_to_app_publisher is None and kwargs['robot_head'].ros2_vr_connection_status == 'active':
                 tts_to_app_publisher = TtsToAppPublisher(
                     robot_head=kwargs['robot_head'], verbose=kwargs['verbose'])
@@ -429,20 +447,23 @@ def task_audio_to_app(**kwargs):
             else:
                 time.sleep(0.05)
     except Exception as e:
-        utils.print_exception(exception=e, message='Audio to app error')
+        thread_health.report_exception(exception=e, message='Audio to app error')
 
 
 def task_button_2_pin_listener(**kwargs):
+    thread_health.register()
     try:
         button_2_pin = Button2Pin(**kwargs)
         while True:
+            thread_health.beat()
             button_2_pin.press_listener()
     except Exception as e:
-        utils.print_exception(exception=e, message='Button listener error')
+        thread_health.report_exception(exception=e, message='Button listener error')
 
 
 # oled screen
 def task_screen(**kwargs):
+    thread_health.register()
     try:
         oled = Oled(clear=False, **kwargs)
         while True:
@@ -451,11 +472,12 @@ def task_screen(**kwargs):
             if not state:
                 del oled
                 warnings.warn('Oled error. Oled deactivated')
+                thread_health.mark_stopped(reason='OLED deactivated')
                 break
             print('Oled cleared')
             time.sleep(2)
     except Exception as e:
-        utils.print_exception(exception=e, message='Oled error')
+        thread_health.report_exception(exception=e, message='Oled error')
         del oled
 
 

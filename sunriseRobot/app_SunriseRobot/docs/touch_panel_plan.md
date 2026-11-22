@@ -70,16 +70,23 @@ Touch targets about 10 mm minimum, so roughly 6-8 buttons per page, with tabs.
 
 Each step is useful on its own, in this order.
 
-### 1. Main app under systemd (RDK X3) - implemented, not yet tested on the robot
+### 1. Main app under systemd (RDK X3) - done, tested on the robot
 - `robot_control.service` and `robot_fan.service` in `sunriseRobot/systemd/`, installed by
   `script_launchers/install_services.sh`. ROS2 processes are children of the main app (`ros2/ros2_processes.py`),
   no more gnome-terminal windows.
 - Read logs with `journalctl -u robot_control`; the supervisor reads them the same way.
 
-### 2. Thread health tracking (RDK X3, main app)
+### 2. Thread health tracking (RDK X3, main app) - implemented, not yet tested on the robot
 - Small registry: each thread loop records "last ran at" and "last exception". Exceptions caught at the
   top of each thread loop are recorded before being printed.
 - Thresholds per thread (a camera loop beats often, a button listener rarely), so yellow/red is meaningful.
+- Done as `thread_health.py` + `configs/thread_health.yaml`. States: ok / warning / error / stopped (a thread
+  that ended on purpose calls `mark_stopped()`; one that dies without it is an error). `thread_health.snapshot()`
+  returns one JSON-ready row per thread for the panel endpoint. Until the panel exists, every state change is
+  printed to the journal (`[thread health] name: ok -> warning (...)`).
+- Covered: the `task_*` threads in `main_thread.py`, the serial receive thread (beats on every valid packet, so
+  it also shows whether the expansion board is talking), the ethernet server and audio bridge accept loops.
+  Not covered: per-connection ethernet handler threads and the ROS2 node spinner threads.
 
 ### 3. Panel endpoint (RDK X3, main app)
 - New server in `ethernet_connection/`, config in `configs/panel_server.yaml` (host, port, status rate).

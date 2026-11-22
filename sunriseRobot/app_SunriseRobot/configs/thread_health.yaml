@@ -1,0 +1,61 @@
+verbose: 1
+
+# Print every thread state change (ok -> warning -> error, ...) to the journal (journalctl -u robot_control)
+log_transitions: true
+check_interval: 1.0 # seconds between two checks of the transition log
+
+# A running thread stays 'warning' for this long after it catches an exception and carries on
+recent_error_window: 60 # seconds
+
+# Silence thresholds (seconds without a beat) for threads not listed below. null = silence never counts:
+# only whether the thread is alive and the exceptions it reports.
+default_warn_after: null
+default_error_after: null
+
+# Per-thread thresholds, keyed by thread name. Silence is counted from when the thread registers, so the
+# thresholds must also cover the thread's start-up (e.g. loading the vision model).
+# Threads that block waiting for an event (button press, joystick input, incoming connection) use null:
+# being silent is their normal state.
+threads:
+  task_controller_loop:  # fast loop; 2 s per iteration while no controller is connected
+    warn_after: 5
+    error_after: 15
+  task_vr_controller:  # 10 ms loop
+    warn_after: 3
+    error_after: 10
+  task_audio_from_vr:  # 50 ms loop
+    warn_after: 3
+    error_after: 10
+  task_audio_from_robot:  # 50 ms loop
+    warn_after: 3
+    error_after: 10
+  task_audio_to_app:  # 50 ms loop
+    warn_after: 3
+    error_after: 10
+  task_vision_agent:  # one detect-and-move cycle, or 2 s idle; start-up loads the model
+    warn_after: 30
+    error_after: 120
+  task_screen:  # OLED refresh every 2 s
+    warn_after: 6
+    error_after: 20
+  task_serial_receive:  # the expansion board reports a packet every 10 ms
+    warn_after: 1
+    error_after: 5
+  task_ps2_controller:  # blocks on the joystick until an input arrives
+    warn_after: null
+    error_after: null
+  task_button_2_pin_bb_listener:  # blocks until the button is pressed
+    warn_after: null
+    error_after: null
+  task_button_2_pin_rb_listener:
+    warn_after: null
+    error_after: null
+  ethernet_server:  # blocks in accept()
+    warn_after: null
+    error_after: null
+  audio_bridge_mic_stream:  # blocks in accept()
+    warn_after: null
+    error_after: null
+  audio_bridge_speaker:  # blocks in accept()
+    warn_after: null
+    error_after: null

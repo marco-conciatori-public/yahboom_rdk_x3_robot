@@ -10,6 +10,7 @@ from PIL import ImageFont
 import Adafruit_SSD1306 as SSD
 
 import utils
+import thread_health
 import global_constants as gc
 
 
@@ -153,6 +154,7 @@ class Oled:
         try:
             state = self.begin()
             while state:
+                thread_health.beat()
                 self.clear(refresh=self.__clear)
                 controller_mode = self.get_controller_mode_status()
                 self.add_line(controller_mode[0], line=1)
@@ -168,5 +170,5 @@ class Oled:
                 time.sleep(2)
             return False
         except Exception as e:
-            utils.print_exception(exception=e, message='oled "main_program" error')
+            thread_health.report_exception(exception=e, message='oled "main_program" error')
             return False

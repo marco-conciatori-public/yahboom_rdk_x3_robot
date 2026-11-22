@@ -7,6 +7,7 @@ import numpy as np
 
 import args
 import utils
+import thread_health
 import global_constants as gc
 from robot_link import protocol
 
@@ -178,6 +179,17 @@ class AudioBridgeServer:
     # ------------------------------------------------------------------ microphone stream (RDK X3 -> Jetson)
 
     def _mic_stream_accept_loop(self) -> None:
+        thread_health.register()
+        try:
+            self._mic_stream_accept_loop_body()
+        except Exception as e:
+            thread_health.report_exception(exception=e, message='Mic stream accept loop error')
+        else:
+            # leaving the loop while still active (accept() failed) stays unmarked, so it shows as an error
+            if not self.is_active:
+                thread_health.mark_stopped(reason='audio bridge stopped')
+
+    def _mic_stream_accept_loop_body(self) -> None:
         server_socket = self._open_server_socket(self.mic_stream_port)
         if server_socket is None:
             return
@@ -188,10 +200,11 @@ class AudioBridgeServer:
                 break
             if self.verbose >= 1:
                 print(f'Mic stream: Jetson connected from {address}')
+            thread_health.beat()
             try:
                 self._serve_mic_stream(connection)
             except Exception as e:
-                utils.print_exception(exception=e, message='Mic stream connection error')
+                thread_health.report_exception(exception=e, message='Mic stream connection error')
             finally:
                 try:
                     connection.close()
@@ -266,6 +279,17 @@ class AudioBridgeServer:
     # ------------------------------------------------------------------ speaker playback (Jetson -> RDK X3)
 
     def _speaker_playback_accept_loop(self) -> None:
+        thread_health.register()
+        try:
+            self._speaker_playback_accept_loop_body()
+        except Exception as e:
+            thread_health.report_exception(exception=e, message='Speaker playback accept loop error')
+        else:
+            # leaving the loop while still active (accept() failed) stays unmarked, so it shows as an error
+            if not self.is_active:
+                thread_health.mark_stopped(reason='audio bridge stopped')
+
+    def _speaker_playback_accept_loop_body(self) -> None:
         server_socket = self._open_server_socket(self.speaker_playback_port)
         if server_socket is None:
             return
@@ -276,10 +300,11 @@ class AudioBridgeServer:
                 break
             if self.verbose >= 1:
                 print(f'Speaker playback: Jetson connected from {address}')
+            thread_health.beat()
             try:
                 self._serve_speaker_playback(connection)
             except Exception as e:
-                utils.print_exception(exception=e, message='Speaker playback connection error')
+                thread_health.report_exception(exception=e, message='Speaker playback connection error')
             finally:
                 try:
                     connection.close()
